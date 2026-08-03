@@ -15,7 +15,7 @@ const createTask = async (req, res) => {
         if (new Date(dueDate) < new Date().setHours(0, 0, 0, 0)) {
             return res.status(400).json({
                 success: false,
-                message:'Due date cannot be in the past',
+                message: 'Due date cannot be in the past',
             });
         }
 
@@ -46,37 +46,59 @@ const getTasks = async (req, res) => {
     try {
         const { search, status, priority, sort, page = 1, limit = 10 } = req.query;
 
-        const query = { userId: req.user._id };
+        const query = { userId: req.user._id, isDeleted: false };
 
-        if (search) {
-            query.title = { $regex: search, $options: 'i' };
-        }
-
-        if (status) {
-            query.status = status;
-        }
-
-        if (priority) {
-            query.priority = priority;
-        }
-
-        let sortOption = { createdAt: -1 }; // default: newest first
-        if (sort) {
-            const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
-            const sortOrder = sort.startsWith('-') ? -1 : 1;
-            sortOption = { [sortField]: sortOrder };
-        }
+        if (search) query.title = { $regex: search, $options: 'i' };
+        if (status) query.status = status;
+        if (priority) query.priority = priority;
 
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
 
-        const tasks = await Task.find(query)
-            .sort(sortOption)
-            .skip(skip)
-            .limit(limitNum);
+        const isPrioritySort = sort === 'priority' || sort === '-priority';
 
-        const totalTasks = await Task.countDocuments(query);
+        let tasks;
+        let totalTasks;
+
+        if (isPrioritySort) {
+            const priorityOrder = sort === '-priority'
+                ? { $switch: { branches: [
+                        { case: { $eq: ['$priority', 'High'] }, then: 1 },
+                        { case: { $eq: ['$priority', 'Medium'] }, then: 2 },
+                        { case: { $eq: ['$priority', 'Low'] }, then: 3 },
+                    ], default: 4 } }
+                : { $switch: { branches: [
+                        { case: { $eq: ['$priority', 'Low'] }, then: 1 },
+                        { case: { $eq: ['$priority', 'Medium'] }, then: 2 },
+                        { case: { $eq: ['$priority', 'High'] }, then: 3 },
+                    ], default: 4 } };
+
+            const pipeline = [
+                { $match: query },
+                { $addFields: { priorityRank: priorityOrder } },
+                { $sort: { priorityRank: 1 } },
+                { $skip: skip },
+                { $limit: limitNum },
+            ];
+
+            tasks = await Task.aggregate(pipeline);
+            totalTasks = await Task.countDocuments(query);
+        } else {
+            let sortOption = { createdAt: -1 }; 
+            if (sort) {
+                const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+                const sortOrder = sort.startsWith('-') ? -1 : 1;
+                sortOption = { [sortField]: sortOrder };
+            }
+
+            tasks = await Task.find(query)
+                .sort(sortOption)
+                .skip(skip)
+                .limit(limitNum);
+
+            totalTasks = await Task.countDocuments(query);
+        }
 
         res.status(200).json({
             success: true,
@@ -237,10 +259,10 @@ const getDashboardStats = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        const totalTasks = await Task.countDocuments({ userId });
-        const pendingTasks = await Task.countDocuments({ userId, status: 'Pending' });
-        const inProgressTasks = await Task.countDocuments({ userId, status: 'In Progress' });
-        const completedTasks = await Task.countDocuments({ userId, status: 'Completed' });
+        const totalTasks = await Task.countDocuments({ userId, isDeleted: false });
+        const pendingTasks = await Task.countDocuments({ userId, status: 'Pending', isDeleted: false });
+        const inProgressTasks = await Task.countDocuments({ userId, status: 'In Progress', isDeleted: false });
+        const completedTasks = await Task.countDocuments({ userId, status: 'Completed', isDeleted: false });
 
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
@@ -250,6 +272,7 @@ const getDashboardStats = async (req, res) => {
         const tasksDueToday = await Task.countDocuments({
             userId,
             dueDate: { $gte: startOfDay, $lte: endOfDay },
+            isDeleted: false,
         });
 
         res.status(200).json({
