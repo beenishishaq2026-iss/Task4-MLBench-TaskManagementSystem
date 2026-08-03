@@ -1,23 +1,31 @@
 require('dotenv').config();
-const express= require('express');
-const cors= require('cors');
+const express = require('express');
+const cors = require('cors');
 const connectDB = require('./config/db');
 
 connectDB();
 
-const app=express();
+const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.CLIENT_URL || '*',
+    credentials: true,
+}));
 app.use(express.json());
 
-app.get('/' , (req,res)=> {
+app.get('/', (req, res) => {
     res.send('API is running');
 });
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 
-const PORT= process.env.PORT || 5000;
-app.listen(PORT, ()=>{
-    console.log(`Server is running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
