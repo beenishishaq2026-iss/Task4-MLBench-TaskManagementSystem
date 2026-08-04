@@ -5,8 +5,6 @@ const Landing = () => {
         <div className="min-h-screen bg-emerald-300 flex items-center justify-center px-4 relative overflow-hidden">
 
             <div className="absolute top-16 right-10 w-16 h-16 text-pink-500 text-5xl select-none rotate-12">✦</div>
-            <div className="absolute bottom-24 left-8 w-20 h-20 bg-pink-500 rounded-full opacity-20 blur-md"></div>
-            <div className="absolute top-1/3 -left-10 w-32 h-32 bg-pink-500 rounded-full opacity-20 blur-md"></div>
 
             <div className="relative w-full max-w-sm text-center">
                 <h1 className="text-4xl font-extrabold text-indigo-950 leading-tight mb-8">
@@ -37,9 +35,9 @@ const Landing = () => {
                     Get Started
                 </Link>
 
-                <p className="text-indigo-950 font-semibold px-3 text-sm mt-5">
+                <p className="text-indigo-950 font-semibold text-sm mt-5">
                     Already have an account?{' '}
-                    <Link to="/login" className="text-indigo-950 font-semibold px-6 hover:underline">Log in</Link>
+                    <Link to="/login" className="text-indigo-950 font-bold hover:underline">Log in</Link>
                 </p>
             </div>
         </div>

@@ -21,6 +21,7 @@ const TaskList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [priority, setPriority] = useState('');
@@ -44,6 +45,18 @@ const TaskList = () => {
             setLoading(false);
         }
     };
+
+    // Debounce: only push the typed value into `search` (which triggers the API call)
+    // after the user has stopped typing for 500ms. This stops an API call firing on
+    // every keystroke.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setPage(1);
+            setSearch(searchInput);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchInput]);
 
     useEffect(() => {
         fetchTasks();
@@ -82,19 +95,19 @@ const TaskList = () => {
                     <div className="flex gap-3">
                         <Link
                             to="/dashboard"
-                            className="bg-red-400 text-indigo-950 font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition text-sm border-2 border-indigo-700/30"
+                            className="bg-red-400 text-black font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition text-sm border-2 border-indigo-700/30"
                         >
                             Dashboard
                         </Link>
                         <Link
                             to="/tasks/new"
-                            className="bg-lime-400 text-indigo-950 font-semibold px-8 py-2.5 rounded-xl hover:bg-indigo-300 transition text-sm shadow-md"
+                            className="bg-lime-400 text-black font-semibold px-5 py-2.5 rounded-xl hover:bg-lime-300 transition text-sm shadow-md border-2 border-indigo-700/30"
                         >
                             + New Task
                         </Link>
                         <button
                             onClick={handleLogout}
-                            className="bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-300 transition text-sm shadow-md"
+                            className="bg-indigo-300 text-black font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-400 transition text-sm shadow-md border-2 border-indigo-700/30"
                         >
                             Logout
                         </button>
@@ -106,15 +119,15 @@ const TaskList = () => {
                     <input
                         type="text"
                         placeholder="Search by title..."
-                        value={search}
-                        onChange={(e) => { setPage(1); setSearch(e.target.value); }}
-                        className="flex-1 min-w-[180px] bg-violet-50 border-2 border-transparent rounded-lg px-4 py-2 text-indigo-950 placeholder-gray-400 focus:outline-none focus:border-indigo-700"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        className="flex-1 min-w-[180px] bg-violet-50 border-2 border-transparent rounded-lg px-4 py-2 text-black font-medium placeholder-gray-500 focus:outline-none focus:border-indigo-700"
                     />
 
                     <select
                         value={status}
                         onChange={(e) => { setPage(1); setStatus(e.target.value); }}
-                        className="bg-violet-50 rounded-lg px-3 py-2 text-indigo-950 focus:outline-none"
+                        className="bg-violet-50 rounded-lg px-3 py-2 text-black font-medium focus:outline-none"
                     >
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
@@ -125,7 +138,7 @@ const TaskList = () => {
                     <select
                         value={priority}
                         onChange={(e) => { setPage(1); setPriority(e.target.value); }}
-                        className="bg-violet-50 rounded-lg px-3 py-2 text-indigo-950 focus:outline-none"
+                        className="bg-violet-50 rounded-lg px-3 py-2 text-black font-medium focus:outline-none"
                     >
                         <option value="">All Priority</option>
                         <option value="Low">Low</option>
@@ -136,7 +149,7 @@ const TaskList = () => {
                     <select
                         value={sort}
                         onChange={(e) => { setPage(1); setSort(e.target.value); }}
-                        className="bg-violet-50 rounded-lg px-3 py-2 text-indigo-950  focus:outline-none"
+                        className="bg-violet-50 rounded-lg px-3 py-2 text-black font-medium focus:outline-none"
                     >
                         <option value="-createdAt">Newest First</option>
                         <option value="createdAt">Oldest First</option>
@@ -149,7 +162,9 @@ const TaskList = () => {
 
 
                 {loading ? (
-                    <p className="text-indigo-950">Loading tasks...</p>
+                    <div className="flex items-center justify-center py-24">
+                        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-700 rounded-full animate-spin"></div>
+                    </div>
                 ) : error ? (
                     <p className="text-red-500">{error}</p>
                 ) : tasks.length === 0 ? (
@@ -164,13 +179,13 @@ const TaskList = () => {
                                     <h3 className="font-bold text-indigo-950 text-lg">{task.title}</h3>
                                 </div>
                                 {task.description && (
-                                    <p className="text-indigo-950 font-semibold px-4 text-sm mb-3 line-clamp-2">{task.description}</p>
+                                    <p className="text-indigo-950 font-semibold text-sm mb-3 line-clamp-2">{task.description}</p>
                                 )}
                                 <div className="flex gap-2 mb-3 flex-wrap">
-                                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${priorityColors[task.priority]}`}>
+                                    <span className={`text-xs font-semibold px-3 py-1 rounded-full w-24 text-center shrink-0 ${priorityColors[task.priority]}`}>
                                         {task.priority}
                                     </span>
-                                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColors[task.status]}`}>
+                                    <span className={`text-xs font-semibold px-3 py-1 rounded-full w-24 text-center shrink-0 ${statusColors[task.status]}`}>
                                         {task.status}
                                     </span>
                                 </div>
