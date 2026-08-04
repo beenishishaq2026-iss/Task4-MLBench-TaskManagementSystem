@@ -8,8 +8,7 @@ connectDB();
 const app = express();
 
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*',
-    credentials: true,
+    origin: ['http://localhost:5173', 'https://task4-ml-bench-task-management-system-7yquaufr1.vercel.app/'],
 }));
 app.use(express.json());
 
