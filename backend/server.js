@@ -10,7 +10,7 @@ const app = express();
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://task4-ml-bench-task-management-syst-three.vercel.app'
+        'https://task4-ml-bench-task-management-syst-lac.vercel.app'
     ],
     credentials: true,
 }));
